@@ -31,7 +31,15 @@ async function run() {
     const partnersCollection = db.collection("studyPartner")
 
      app.get('/studyPartner', async (req, res) => {
-      const cursor = partnersCollection.find()
+        const ProjectField = {
+            name : 1,
+            profileImage : 1,
+            skill : 1,
+            subject : 1,
+            rating : 1,
+
+        }
+      const cursor = partnersCollection.find().sort({rating : 1}).limit(3).project(ProjectField)
       const result = await cursor.toArray()
       res.send(result)
       
@@ -40,7 +48,7 @@ async function run() {
 
     app.post("/studyPartner", async(req , res) => {
         const newPartner = req.body;
-        const result = await partnersCollection.findOne();
+        const result = await partnersCollection.insertOne(newPartner);
         res.send(result)
     })
 
