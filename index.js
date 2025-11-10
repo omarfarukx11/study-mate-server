@@ -29,6 +29,7 @@ async function run() {
     
     const db = client.db("studyPartner_db")
     const partnersCollection = db.collection("studyPartner")
+    const reviewCollection = db.collection("review")
 
      app.get('/studyPartner', async (req, res) => {
         const ProjectField = {
@@ -45,14 +46,28 @@ async function run() {
       
     }
     )
-
+    
     app.post("/studyPartner", async(req , res) => {
-        const newPartner = req.body;
-        const result = await partnersCollection.insertOne(newPartner);
-        res.send(result)
+      const newPartner = req.body;
+      const result = await partnersCollection.insertOne(newPartner);
+      res.send(result)
     })
 
-
+    // reviews api
+    app.post("/review", async(req , res) => {
+      const newPartner = req.body;
+      const result = await reviewCollection.insertOne(newPartner);
+      res.send(result)
+    })
+    
+    
+    app.get('/review', async (req, res) => {
+     const cursor = reviewCollection.find()
+     const result = await cursor.toArray()
+     res.send(result)
+     
+   }
+   )
 
 
 
