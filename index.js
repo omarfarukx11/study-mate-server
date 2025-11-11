@@ -28,10 +28,11 @@ async function run() {
     const db = client.db("studyPartner_db");
     const partnersCollection = db.collection("studyPartner");
     const reviewCollection = db.collection("review");
+    const requestCollection = db.collection("request");
 
     //Partners APIs
     app.get("/findPartner", async (req, res) => {
-      const cursor = partnersCollection.find()
+      const cursor = partnersCollection.find();
       const result = await cursor.toArray();
       res.send(result);
     });
@@ -46,7 +47,7 @@ async function run() {
       };
       const cursor = partnersCollection
         .find()
-        .sort({ rating: 1 })
+        .sort({ rating: -1 })
         .limit(3)
         .project(ProjectField);
       const result = await cursor.toArray();
@@ -67,17 +68,81 @@ async function run() {
     });
 
     // reviews api
-    app.post("/review", async (req, res) => {
-      const newPartner = req.body;
-      const result = await reviewCollection.insertOne(newPartner);
-      res.send(result);
-    });
-
+    // app.post("/review", async (req, res) => {
+    //   const newPartner = req.body;
+    //   const result = await reviewCollection.insertOne(newPartner);
+    //   res.send(result);
+    // });
     app.get("/review", async (req, res) => {
       const cursor = reviewCollection.find();
       const result = await cursor.toArray();
       res.send(result);
     });
+
+   
+
+
+    // Send Partner Request API
+    app.post("/request/:id", async (req, res) => {
+      try {
+        const partnerId = req.params.id;
+        const { userEmail } = req.body; 
+
+        const partner = await partnersCollection.findOne({_id: new ObjectId(partnerId)});
+        
+        if (!partner) {
+          return res.status(404).send({ error: "Partner not found" });
+        }
+
+        // Duplicate request check
+        const existingRequest = await requestCollection.findOne({
+          partnerId: partner._id,
+          userEmail: userEmail,
+        });
+        if (existingRequest) {
+          return res
+            .status(400)
+            .send({ error: "You already sent request to this partner" });
+        }
+
+        // Partner count increment
+        await partnersCollection.updateOne(
+          { _id: new ObjectId(partnerId) },
+          { $inc: { partnerCount: 1 } }
+        );
+
+        // Save request in request collection
+        const requestData = {
+          partnerId: partner._id,
+          partnerName: partner.name,
+          partnerEmail: partner.email,
+          userEmail: userEmail,
+          createdAt: new Date(),
+        };
+
+        const result = await requestCollection.insertOne(requestData);
+
+        res.send({
+          success: true,
+          message: "Partner request sent successfully",
+          insertedId: result.insertedId,
+        });
+      } catch (err) {
+        console.error(err);
+        res.status(500).send({ error: "Failed to send partner request" });
+      }
+    });
+
+
+
+
+
+
+
+
+
+
+
 
     await client.db("admin").command({ ping: 1 });
     console.log(
