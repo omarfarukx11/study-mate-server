@@ -79,70 +79,61 @@ async function run() {
       res.send(result);
     });
 
-   
-
-
     // Send Partner Request API
-    app.post("/request/:id", async (req, res) => {
-      try {
-        const partnerId = req.params.id;
-        const { userEmail } = req.body; 
 
-        const partner = await partnersCollection.findOne({_id: new ObjectId(partnerId)});
-        
-        if (!partner) {
-          return res.status(404).send({ error: "Partner not found" });
-        }
-
-        // Duplicate request check
-        const existingRequest = await requestCollection.findOne({
-          partnerId: partner._id,
-          userEmail: userEmail,
-        });
-        if (existingRequest) {
-          return res
-            .status(400)
-            .send({ error: "You already sent request to this partner" });
-        }
-
-        // Partner count increment
-        await partnersCollection.updateOne(
-          { _id: new ObjectId(partnerId) },
-          { $inc: { partnerCount: 1 } }
-        );
-
-        // Save request in request collection
-        const requestData = {
-          partnerId: partner._id,
-          partnerName: partner.name,
-          partnerEmail: partner.email,
-          userEmail: userEmail,
-          createdAt: new Date(),
-        };
-
-        const result = await requestCollection.insertOne(requestData);
-
-        res.send({
-          success: true,
-          message: "Partner request sent successfully",
-          insertedId: result.insertedId,
-        });
-      } catch (err) {
-        console.error(err);
-        res.status(500).send({ error: "Failed to send partner request" });
-      }
+    app.get("/request", async (req, res) => {
+      const cursor = requestCollection.find();
+      const result = await cursor.toArray();
+      res.send(result);
     });
 
+    
+    app.post("/request/:id", async (req, res) => {
+      const partnerId = req.params.id;
+      const email = req.body.email;
 
+      const partner = await partnersCollection.findOne({
+        _id: new ObjectId(partnerId),
+      });
 
+      if (!partner) {
+        return res.status(404).send({ error: "Partner not found" });
+      }
 
+      // Duplicate request check
+      const existingRequest = await requestCollection.findOne({
+        partnerId: partner._id,
+        userEmail: email,
+      });
+      if (existingRequest) {
+        return res
+          .status(400)
+          .send({ error: "You already sent request to this partner" });
+      }
 
+      // Partner count increment
+      await partnersCollection.updateOne(
+        { _id: new ObjectId(partnerId) },
+        { $inc: { partnerCount: 1 } }
+      );
 
+      // Save request in request collection
+      const requestData = {
+        partnerId: partner._id,
+        partnerName: partner.name,
+        partnerEmail: partner.email,
+        userEmail: email,
+        createdAt: new Date(),
+      };
 
+      const result = await requestCollection.insertOne(requestData);
 
-
-
-
+      res.send({
+        success: true,
+        message: "Partner request sent successfully",
+        insertedId: result.insertedId,
+      });
+    });
 
     await client.db("admin").command({ ping: 1 });
     console.log(
