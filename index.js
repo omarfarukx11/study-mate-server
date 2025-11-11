@@ -87,7 +87,12 @@ async function run() {
       res.send(result);
     });
 
-    
+    // app.get("/request/:id", async (req, res) => {
+    //   const partnerId = req.params.id;
+    //   const query = {_id : new ObjectId(partnerId)}
+    //   const result = await partnersCollection.findOne(query)
+    // });
+
     app.post("/request/:id", async (req, res) => {
       const partnerId = req.params.id;
       const email = req.body.email;
@@ -139,6 +144,14 @@ async function run() {
     console.log(
       "Pinged your deployment. You successfully connected to MongoDB!"
     );
+
+    // app.get("/request/:userEmail", async (req, res) => {
+    //   const userEmail = req.params.userEmail;
+    //   const requests = await requestCollection
+    //     .find({ userEmail })
+    //     .toArray();
+    //   res.send(requests);
+    // });
   } finally {
   }
 }
