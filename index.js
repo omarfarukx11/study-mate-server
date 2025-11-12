@@ -24,7 +24,6 @@ const client = new MongoClient(uri, {
 async function run() {
   try {
     await client.connect();
-
     const db = client.db("studyPartner_db");
     const partnersCollection = db.collection("studyPartner");
     const reviewCollection = db.collection("review");
@@ -39,11 +38,49 @@ async function run() {
 
     app.get("/findPartner/:id", async (req, res) => {
       const id = req.params.id;
-      const query = {_id: new ObjectId(id)}
-      const result = await partnersCollection.findOne(query)
+      const query = { _id: new ObjectId(id) };
+      const result = await partnersCollection.findOne(query);
       res.send(result);
     });
 
+
+// update APIS 
+    app.patch("/updatePartner/:id", async (req, res) => {
+  try {
+    const id = req.params.id;
+    const updatedData = req.body;
+
+    const filter = { _id: new ObjectId(id) };
+    const updatePartner = {
+      $set: {
+        name: updatedData.name,
+        profileImage: updatedData.profileImage,
+        subject: updatedData.subject,
+        skill: updatedData.skill,
+        studyMode: updatedData.studyMode,
+        availabilityTime: updatedData.availabilityTime,
+        location: updatedData.location,
+        experienceLevel: updatedData.experienceLevel,
+        rating: updatedData.rating,
+        email: updatedData.email,
+      },
+    };
+
+    const result = await partnersCollection.updateOne(filter, updatePartner);
+
+    if (result.modifiedCount > 0) {
+      res.send({ success: true, message: "Partner updated successfully!" });
+    } else {
+      res.send({ success: false, message: "No changes were made." });
+    }
+  } catch (error) {
+    console.error("Error updating partner:", error);
+    res.status(500).send({ success: false, message: "Failed to update partner." });
+  }
+});
+
+
+    // studyPartners APIs
     app.get("/studyPartner", async (req, res) => {
       const ProjectField = {
         name: 1,
@@ -60,14 +97,12 @@ async function run() {
       const result = await cursor.toArray();
       res.send(result);
     });
-
     app.get("/studyPartner/:id", async (req, res) => {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) };
       const result = await partnersCollection.findOne(query);
       res.send(result);
     });
-
     app.post("/studyPartner", async (req, res) => {
       const newPartner = req.body;
       const result = await partnersCollection.insertOne(newPartner);
@@ -75,11 +110,6 @@ async function run() {
     });
 
     // reviews api
-    // app.post("/review", async (req, res) => {
-    //   const newPartner = req.body;
-    //   const result = await reviewCollection.insertOne(newPartner);
-    //   res.send(result);
-    // });
     app.get("/review", async (req, res) => {
       const cursor = reviewCollection.find();
       const result = await cursor.toArray();
@@ -87,24 +117,18 @@ async function run() {
     });
 
     // Send Partner Request API
-
     app.get("/request", async (req, res) => {
       const cursor = requestCollection.find();
       const result = await cursor.toArray();
       res.send(result);
     });
 
-    // app.get("/request/:id", async (req, res) => {
-    //   const partnerId = req.params.id;
-    //   const query = {_id : new ObjectId(partnerId)}
-    //   const result = await partnersCollection.findOne(query)
-    // });
-
-
-
-
-
-
+    app.delete("/request/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await requestCollection.deleteOne(query);
+      res.send(result);
+    });
 
     app.post("/request/:id", async (req, res) => {
       const partnerId = req.params.id;
@@ -150,14 +174,6 @@ async function run() {
         insertedId: result.insertedId,
       });
     });
-
-
-
-
-
-
-
-
 
     await client.db("admin").command({ ping: 1 });
     console.log(
