@@ -37,6 +37,13 @@ async function run() {
       res.send(result);
     });
 
+    app.get("/findPartner/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = {_id: new ObjectId(id)}
+      const result = await partnersCollection.findOne(query)
+      res.send(result);
+    });
+
     app.get("/studyPartner", async (req, res) => {
       const ProjectField = {
         name: 1,
@@ -93,6 +100,12 @@ async function run() {
     //   const result = await partnersCollection.findOne(query)
     // });
 
+
+
+
+
+
+
     app.post("/request/:id", async (req, res) => {
       const partnerId = req.params.id;
       const email = req.body.email;
@@ -105,24 +118,22 @@ async function run() {
         return res.status(404).send({ error: "Partner not found" });
       }
 
-      // Duplicate request check
       const existingRequest = await requestCollection.findOne({
         partnerId: partner._id,
         userEmail: email,
       });
+
       if (existingRequest) {
         return res
           .status(400)
           .send({ error: "You already sent request to this partner" });
       }
 
-      // Partner count increment
       await partnersCollection.updateOne(
         { _id: new ObjectId(partnerId) },
         { $inc: { partnerCount: 1 } }
       );
 
-      // Save request in request collection
       const requestData = {
         partnerId: partner._id,
         partnerName: partner.name,
@@ -139,6 +150,14 @@ async function run() {
         insertedId: result.insertedId,
       });
     });
+
+
+
+
+
+
+
+
 
     await client.db("admin").command({ ping: 1 });
     console.log(
