@@ -79,7 +79,6 @@ async function run() {
   }
 });
 
-
     // studyPartners APIs
     app.get("/studyPartner", async (req, res) => {
       const ProjectField = {
@@ -175,18 +174,13 @@ async function run() {
       });
     });
 
+
     await client.db("admin").command({ ping: 1 });
     console.log(
       "Pinged your deployment. You successfully connected to MongoDB!"
     );
 
-    // app.get("/request/:userEmail", async (req, res) => {
-    //   const userEmail = req.params.userEmail;
-    //   const requests = await requestCollection
-    //     .find({ userEmail })
-    //     .toArray();
-    //   res.send(requests);
-    // });
+
   } finally {
   }
 }
