@@ -3,7 +3,7 @@
 This repository contains the backend of the StudyMate platform. It is responsible for handling data storage, CRUD operations, user authentication, and partner request management.
 
 ## Live Site
-[Insert your live server URL here]
+https://study-mate-server-tau.vercel.app/
 
 ## Features
 - **RESTful API:** Provides endpoints for creating, reading, updating, and deleting study partner profiles.
