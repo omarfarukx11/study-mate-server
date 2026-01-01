@@ -86,7 +86,7 @@ async function run() {
       const cursor = partnersCollection
         .find()
         .sort({ rating: -1 })
-        .limit(3)
+        .limit(8)
         .project(ProjectField);
       const result = await cursor.toArray();
       res.send(result);
@@ -117,7 +117,7 @@ async function run() {
       res.send(result);
     });
 
-app.delete("/request/:id", async (req, res) => {
+    app.delete("/request/:id", async (req, res) => {
   const id = req.params.id;
 
   const request = await requestCollection.findOne({ _id: new ObjectId(id) });
@@ -133,7 +133,7 @@ app.delete("/request/:id", async (req, res) => {
     { $inc: { partnerCount: -1 } }
   );
   res.send({ success: true, deletedCount: result.deletedCount });
-});
+    });
 
 
     app.post("/request/:id", async (req, res) => {
