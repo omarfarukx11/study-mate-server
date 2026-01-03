@@ -28,8 +28,25 @@ async function run() {
     const partnersCollection = db.collection("studyPartner");
     const reviewCollection = db.collection("review");
     const requestCollection = db.collection("request");
+    const blogsCollection = db.collection("blogs");
 
+    app.post('/new-blogs' , async (req , res ) => { 
+      const newBlogs = req.body;
+      newBlogs.createdAt = new Date().toDateString()
+      const result = await blogsCollection.insertOne(newBlogs);
+      res.send(result);
+     })
 
+     app.get('/allBlogs' , async (req , res) => { 
+        const result = await blogsCollection.find().toArray()
+        res.send(result)
+      })
+     app.get('/allBlogs/:id' , async (req , res) => { 
+      const id = req.params.id;
+      const query = {_id : new ObjectId(id)}
+        const result = await blogsCollection.findOne(query)
+        res.send(result)
+      })
 
     app.get("/findPartner", async (req, res) => {
       const page = parseInt(req.query.page) || 0;
