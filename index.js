@@ -1,12 +1,11 @@
 const express = require("express");
 const cors = require("cors");
 const app = express();
-require('dotenv').config()
+require("dotenv").config();
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const port = process.env.PORT || 3000;
 
-const uri =`mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.oyyjehq.mongodb.net/?appName=Cluster0`
-
+const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.oyyjehq.mongodb.net/?appName=Cluster0`;
 
 app.use(cors());
 app.use(express.json());
@@ -30,10 +29,23 @@ async function run() {
     const reviewCollection = db.collection("review");
     const requestCollection = db.collection("request");
 
+
+
     app.get("/findPartner", async (req, res) => {
-      const cursor = partnersCollection.find();
+      const page = parseInt(req.query.page) || 0;
+      const size = parseInt(req.query.size) || 15;
+
+      const cursor = partnersCollection
+        .find()
+        .skip(page * size)
+        .limit(size);
+
       const result = await cursor.toArray();
-      res.send(result);
+      const count = await partnersCollection.countDocuments();
+      res.send({
+        partners: result,
+        count,
+      });
     });
 
     app.get("/findPartner/:id", async (req, res) => {
@@ -43,37 +55,36 @@ async function run() {
       res.send(result);
     });
 
-  app.patch("/updatePartner/:id", async (req, res) => {
-  const id = req.params.id;
-  const updatedData = req.body;
-  const filter = { _id: new ObjectId(id) };
-  const updatePartner = {
-    $set: {
-      name: updatedData.name,
-      profileImage: updatedData.profileImage,
-      subject: updatedData.subject,
-      skill: updatedData.skill,
-      studyMode: updatedData.studyMode,
-      availabilityTime: updatedData.availabilityTime,
-      location: updatedData.location,
-      experienceLevel: updatedData.experienceLevel,
-      rating: updatedData.rating,
-      email: updatedData.email,
-    },
-  };
-  const result = await partnersCollection.updateOne(filter, updatePartner);
-  if (result.modifiedCount > 0) {
-    return res.send({
-      success: true,
-      message: "Partner updated successfully!",
+    app.patch("/updatePartner/:id", async (req, res) => {
+      const id = req.params.id;
+      const updatedData = req.body;
+      const filter = { _id: new ObjectId(id) };
+      const updatePartner = {
+        $set: {
+          name: updatedData.name,
+          profileImage: updatedData.profileImage,
+          subject: updatedData.subject,
+          skill: updatedData.skill,
+          studyMode: updatedData.studyMode,
+          availabilityTime: updatedData.availabilityTime,
+          location: updatedData.location,
+          experienceLevel: updatedData.experienceLevel,
+          rating: updatedData.rating,
+          email: updatedData.email,
+        },
+      };
+      const result = await partnersCollection.updateOne(filter, updatePartner);
+      if (result.modifiedCount > 0) {
+        return res.send({
+          success: true,
+          message: "Partner updated successfully!",
+        });
+      }
+      res.send({
+        success: false,
+        message: "No changes were made.",
+      });
     });
-  }
-  res.send({
-    success: false,
-    message: "No changes were made.",
-  });
-});
-
 
     app.get("/studyPartner", async (req, res) => {
       const ProjectField = {
@@ -86,7 +97,7 @@ async function run() {
       const cursor = partnersCollection
         .find()
         .sort({ rating: -1 })
-        .limit(8)
+        .limit(10)
         .project(ProjectField);
       const result = await cursor.toArray();
       res.send(result);
@@ -118,23 +129,26 @@ async function run() {
     });
 
     app.delete("/request/:id", async (req, res) => {
-  const id = req.params.id;
+      const id = req.params.id;
 
-  const request = await requestCollection.findOne({ _id: new ObjectId(id) });
-  if (!request) {
-    return res.status(404).send({ error: "Request not found" });
-  }
+      const request = await requestCollection.findOne({
+        _id: new ObjectId(id),
+      });
+      if (!request) {
+        return res.status(404).send({ error: "Request not found" });
+      }
 
-  const partnerId = request.partnerId;
-  const result = await requestCollection.deleteOne({ _id: new ObjectId(id) });
-  
-  await partnersCollection.updateOne(
-    { _id: new ObjectId(partnerId) },
-    { $inc: { partnerCount: -1 } }
-  );
-  res.send({ success: true, deletedCount: result.deletedCount });
+      const partnerId = request.partnerId;
+      const result = await requestCollection.deleteOne({
+        _id: new ObjectId(id),
+      });
+
+      await partnersCollection.updateOne(
+        { _id: new ObjectId(partnerId) },
+        { $inc: { partnerCount: -1 } }
+      );
+      res.send({ success: true, deletedCount: result.deletedCount });
     });
-
 
     app.post("/request/:id", async (req, res) => {
       const partnerId = req.params.id;
@@ -173,7 +187,9 @@ async function run() {
       });
     });
 
-    console.log("Pinged your deployment. You successfully connected to MongoDB!");
+    console.log(
+      "Pinged your deployment. You successfully connected to MongoDB!"
+    );
   } finally {
   }
 }
